@@ -229,6 +229,30 @@ module.exports = require("shortid");
 "use strict";
 
 
+var winston = __webpack_require__(34),
+    config = __webpack_require__(2);
+
+/**
+* Requiring `winston-mongodb` will expose
+* `winston.transports.MongoDB`
+*/
+__webpack_require__(35).MongoDB;
+
+winston.add(winston.transports.MongoDB, {
+    db: config.db,
+    level: config.log.level,
+    collection: 'logs'
+});
+
+module.exports = winston;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var mongoose = __webpack_require__(0),
     mongoosePaginate = __webpack_require__(1);
 
@@ -285,31 +309,7 @@ module.exports = mongoose.model('chanel', schema);
 //   }
 
 /***/ }),
-/* 16 */,
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var winston = __webpack_require__(34),
-    config = __webpack_require__(2);
-
-/**
-* Requiring `winston-mongodb` will expose
-* `winston.transports.MongoDB`
-*/
-__webpack_require__(35).MongoDB;
-
-winston.add(winston.transports.MongoDB, {
-    db: config.db,
-    level: config.log.level,
-    collection: 'logs'
-});
-
-module.exports = winston;
-
-/***/ }),
+/* 17 */,
 /* 18 */
 /***/ (function(module, exports) {
 
@@ -494,10 +494,10 @@ var _timers = __webpack_require__(18);
 var moment = __webpack_require__(8),
     async = __webpack_require__(4),
     Following = __webpack_require__(19),
-    Chanel = __webpack_require__(15),
+    Chanel = __webpack_require__(16),
     Pinterest = __webpack_require__(37),
     Post = __webpack_require__(7),
-    logger = __webpack_require__(17),
+    logger = __webpack_require__(15),
     Request = __webpack_require__(20);
 
 module.exports = {
@@ -550,7 +550,9 @@ module.exports = {
 
                 Following.findById(data._id, function (err, doc) {
                   if (err) {
-                    console.log(err);
+                    {
+                      logger.info("ERROR :", err);
+                    };
                   }
 
                   // NEU FOLLING FAIL + 1 ngay + rt++
@@ -571,7 +573,7 @@ module.exports = {
                         if (item) {
                           item.stt = 7;
                           item.save();
-                          logger.info("FOLLOW JOB FAIL ", item);
+                          logger.info("FOLLOW JOB FAIL ", data.lnk);
                         }
                       });
                     }
@@ -591,7 +593,7 @@ module.exports = {
             if (item) {
               item.stt = 7; // cho xoa
               item.save();
-              logger.info("FOLLOW JOB FAIL ", item);
+              logger.info("FOLLOW JOB FAIL ", data.lnk);
             }
           });
         }
@@ -883,12 +885,12 @@ var async = __webpack_require__(4),
     Agenda = __webpack_require__(59),
     mongoose = __webpack_require__(0),
     _ = __webpack_require__(3),
-    Chanel = __webpack_require__(15),
+    Chanel = __webpack_require__(16),
     Following = __webpack_require__(19),
     Post = __webpack_require__(7),
     Rss = __webpack_require__(21),
-    Logger = __webpack_require__(63),
-    logger = __webpack_require__(17),
+    Logger = __webpack_require__(60),
+    logger = __webpack_require__(15),
     config = __webpack_require__(2);
 
 module.exports = {
@@ -922,11 +924,12 @@ module.exports = {
         if (_.isNullOrUndefined(_data)) {
           // QUET CAC BAN GHI TRC 10 Phut
           var _at = moment().add(-10, "seconds").toDate();
-          Rss.find({ stt: 1, at: { $lt: _at }, rt: { $lte: 7 } }).sort({ _id: -1 }).exec(function (err, docs) {
+
+          Rss.find({ stt: 1, at: { $lt: _at }, rt: { $lt: 7 } }).sort({ _id: -1 }).exec(function (err, docs) {
             // get all rss
-            // console.log("RSS DOCUMETN MATCH");
-            // console.log(docs);
-            // console.log("END SHOW RSS DOCUMETN MATCH");
+            console.log("RSS DOCUMETN MATCH");
+            console.log(docs);
+            console.log("END SHOW RSS DOCUMETN MATCH");
             if (docs.length > 0) {
               var _series = [];
               docs.forEach(function (doc) {
@@ -955,7 +958,7 @@ module.exports = {
             }
           }); // end find
         } else {
-          __webpack_require__(60).feed(_data);
+          __webpack_require__(61).feed(_data);
         }
       } catch (error) {
         logger.error("feed job", error);
@@ -1218,7 +1221,7 @@ module.exports = {
 
     _agenda.on("ready", function () {
       // chạy job tại mỗi thời điểm nhất định
-      _agenda.every('2 seconds', 'feed');
+      _agenda.every('5 seconds', 'feed');
       _agenda.every('25 seconds', 'post');
       _agenda.every("20 seconds", "following");
       _agenda.every('1 days', 'clean');
@@ -1273,28 +1276,45 @@ module.exports = require("agenda");
 "use strict";
 
 
-var _getIterator2 = __webpack_require__(61);
+var mongoose = __webpack_require__(0);
+module.exports = mongoose.model("log", new mongoose.Schema({
+  timestamp: Date,
+  level: String,
+  message: String,
+  meta: {}
+}, {
+  collection: "logs"
+}));
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _getIterator2 = __webpack_require__(62);
 
 var _getIterator3 = _interopRequireDefault(_getIterator2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Feed = __webpack_require__(62),
+var Feed = __webpack_require__(63),
     async = __webpack_require__(4),
     _ = __webpack_require__(3),
     Request = __webpack_require__(20),
     moment = __webpack_require__(39),
-    Chanel = __webpack_require__(15),
+    Chanel = __webpack_require__(16),
     Rss = __webpack_require__(21),
     shortid = __webpack_require__(10),
-    logger = __webpack_require__(17),
+    logger = __webpack_require__(15),
     Post = __webpack_require__(7);
 
 module.exports = {
     feed: function feed(data) {
 
-        //    console.log(data);
-        //    console.log("RUN IN DATA");
+        console.log(data);
+        console.log("RUN IN DATA");
         async.waterfall([
         // load list post data by link rss
         function (callback) {
@@ -1309,7 +1329,7 @@ module.exports = {
                     if (rss.items && rss.items.length > 0) {
                         // items rss
                         var _items = rss.items;
-                        logger.info("LOAD POST COUNT ", _items.length);
+                        logger.info("LOAD POST RSS COUNT ", _items.length);
                         callback(null, _items);
                     }
                 }
@@ -1339,6 +1359,7 @@ module.exports = {
         // has list item post and last at. Convert link item using  https://api.viralnk.com/short return list new item
         function (rssItems, _lastAt, callback) {
             console.log(_lastAt);
+            console.log(rssItems);
 
             console.log("RUN RSS ITEM DATA 2");
             if (rssItems.length > 0) {
@@ -1516,33 +1537,16 @@ module.exports = {
 };
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports) {
 
 module.exports = require("babel-runtime/core-js/get-iterator");
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports) {
 
 module.exports = require("rss-to-json");
-
-/***/ }),
-/* 63 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var mongoose = __webpack_require__(0);
-module.exports = mongoose.model("log", new mongoose.Schema({
-  timestamp: Date,
-  level: String,
-  message: String,
-  meta: {}
-}, {
-  collection: "logs"
-}));
 
 /***/ })
 /******/ ]);
