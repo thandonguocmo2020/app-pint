@@ -1436,7 +1436,7 @@ module.exports = {
                                 if (!err && response.statusCode == 200) {
                                     var s = JSON.parse(body);
                                     var _tl = _.truncate(item.title, { length: 60, 'separator': /,? +/ });
-                                    var _ran = shortid.generate();
+                                    // var _ran = shortid.generate();
 
                                     if (s.stt == 1) {
 
@@ -1454,10 +1454,10 @@ module.exports = {
                                             _cid: data._cid,
                                             tk: data.access_token,
                                             br: data.board,
-                                            tl: _tl, // field check unique
-                                            nt: data.tmp.replace(/{title}/ig, _tl).replace(/{url}/ig, _lnk).replace(/{random}/, _ran),
+                                            // tl: _tl, // field check unique
+                                            nt: data.tmp.replace(/{title}/ig, _tl).replace(/{url}/ig, _lnk),
                                             img: _img,
-                                            link: _lnk,
+                                            link: item.link + '?utm=' + data.utm,
                                             // utc: data.uic,// if has utcode
                                             at: _lastAt
                                         };
@@ -1508,7 +1508,8 @@ module.exports = {
                     // loại bỏ các bài viết trùng link trùng kênh
                     if (docs.length > 0) {
 
-                        var newItems = _.differenceBy(posts, docs, 'tl');
+                        var newItems = _.differenceBy(posts, docs, 'link');
+
                         callback(null, newItems);
                     } else {
                         callback(null, posts);
